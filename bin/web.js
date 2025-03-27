@@ -4,7 +4,7 @@ import Analytics from "analytics-node";
 import basicAuth from "basic-auth";
 import express from "express";
 import { v4 as uuid } from "uuid";
-import { Pecans, platforms } from "../lib/index.js";
+import { Pecans } from "../lib/index.js";
 import { platformToType } from "../lib/utils/platforms.js";
 
 const app = express();
