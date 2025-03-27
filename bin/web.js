@@ -1,7 +1,9 @@
+import "dotenv/config";
+
+import Analytics from "analytics-node";
+import basicAuth from "basic-auth";
 import express from "express";
 import { v4 as uuid } from "uuid";
-import basicAuth from "basic-auth";
-import Analytics from "analytics-node";
 import { Pecans, platforms } from "../lib/index.js";
 import { platformToType } from "../lib/utils/platforms.js";
 
@@ -26,19 +28,23 @@ const opts = {
   timeout: process.env.VERSIONS_TIMEOUT,
   cache: process.env.VERSIONS_CACHE,
   refreshSecret: process.env.GITHUB_SECRET,
-  proxyAssets: !Boolean(process.env.DONT_PROXY_ASSETS),
+  proxyAssets: !process.env.DONT_PROXY_ASSETS,
   // base path to inject between host and relative path. use for D.O. app service where
   // app is proxied through / api and the original url isn't passed by the proxy.
   basePath: process.env.BASE_PATH,
 };
 
 // strip undefined from opts
-Object.keys(opts).forEach((key) => opts[key] === undefined && delete opts[key]);
+for (const key in opts) {
+  if (opts[key] === undefined) {
+    delete opts[key];
+  }
+}
 
 const myPecans = new Pecans(opts);
 
 // Control access to API
-myPecans.before("api", function (access, next) {
+myPecans.before("api", (access, next) => {
   if (!apiAuth.username) return next();
 
   function unauthorized() {
@@ -52,13 +58,12 @@ myPecans.before("api", function (access, next) {
 
   if (user.name === apiAuth.username && user.pass === apiAuth.password) {
     return next();
-  } else {
-    return unauthorized();
   }
+  return unauthorized();
 });
 
 // Log download
-myPecans.before("download", function (download, next) {
+myPecans.before("download", (download, next) => {
   console.log(
     "download",
     download.platform.filename,
@@ -72,7 +77,7 @@ myPecans.before("download", function (download, next) {
 
   next();
 });
-myPecans.after("download", function (download, next) {
+myPecans.after("download", (download, next) => {
   console.log(
     "downloaded",
     download.platform.filename,
@@ -116,10 +121,10 @@ if (process.env.TRUST_PROXY) {
 app.use(myPecans.router);
 
 // Error handling
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
   res.status(404).send("Page not found");
 });
-app.use(function (err, req, res, next) {
+app.use((err, req, res, next) => {
   const msg = err.message || err;
   const code = 500;
 
@@ -127,13 +132,13 @@ app.use(function (err, req, res, next) {
 
   // Return error
   res.format({
-    "text/plain": function () {
+    "text/plain": () => {
       res.status(code).send(msg);
     },
-    "text/html": function () {
+    "text/html": () => {
       res.status(code).send(msg);
     },
-    "application/json": function () {
+    "application/json": () => {
       res.status(code).send({
         error: msg,
         code: code,
@@ -147,15 +152,15 @@ myPecans
 
   // Start the HTTP server
   .then(
-    function () {
-      const server = app.listen(process.env.PORT || 5000, function () {
+    () => {
+      const server = app.listen(process.env.PORT || 5000, () => {
         const host = server.address().address;
         const port = server.address().port;
 
         console.log("Listening at http://%s:%s", host, port);
       });
     },
-    function (err) {
+    (err) => {
       console.log(err.stack || err);
       process.exit(1);
     }
