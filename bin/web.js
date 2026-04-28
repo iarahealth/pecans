@@ -1,4 +1,8 @@
 import "dotenv/config";
+import tls from "node:tls";
+
+// Reject TLS 1.0 and TLS 1.1 — enforce TLS 1.2+ for all outgoing connections.
+tls.DEFAULT_MIN_VERSION = "TLSv1.2";
 
 import Analytics from "analytics-node";
 import basicAuth from "basic-auth";
