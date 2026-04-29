@@ -13,6 +13,14 @@ import { platformToType } from "../lib/utils/platforms.js";
 
 const app = express();
 
+// Set HSTS header for HTTPS requests
+app.use((req, res, next) => {
+  if (req.headers["x-forwarded-proto"] === "https") {
+    res.set("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+  }
+  next();
+});
+
 const apiAuth = {
   username: process.env.API_USERNAME,
   password: process.env.API_PASSWORD,
@@ -76,7 +84,7 @@ myPecans.before("download", (download, next) => {
     "on channel",
     download.version.channel,
     "for",
-    download.platform.type
+    download.platform.type,
   );
 
   next();
@@ -90,7 +98,7 @@ myPecans.after("download", (download, next) => {
     "on channel",
     download.version.channel,
     "for",
-    download.platform.type
+    download.platform.type,
   );
 
   // Track on segment if enabled
@@ -167,5 +175,5 @@ myPecans
     (err) => {
       console.log(err.stack || err);
       process.exit(1);
-    }
+    },
   );
